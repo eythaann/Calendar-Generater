@@ -50,7 +50,7 @@ export const createResultFile = async (pairList: any) => {
   let string = JSON.stringify(pairList).replaceAll(/[{}]|(,"days")|("count":)|["]/g, '')
   string = string.replaceAll(/[,]/g, '\n')
 
-  await writeFile(__dirname + '/assets/Result.txt', string)
+  await writeFile(__dirname + '/assets/result.txt', string)
 
-  console.log('File Complete. Locate at ./assets/Result.txt')
+  console.log('File Complete. Locate at ./assets/result.txt')
 }

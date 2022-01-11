@@ -22,7 +22,7 @@ export class Calendar {
     const txt = data.toString()
 
     // create a array of persons and filter all empyt lines
-    const persons = txt.split('\n').filter(Boolean)
+    const persons = txt.split('\n')
 
     console.log('Extract Data Completed \n')
     console.log('Creating New Calendar')
@@ -40,7 +40,7 @@ export class Calendar {
     // and the index is the minute of the day
     persons.forEach((employe: string) => {
       const [name, dateString] = employe.split('=')
-      const dates = dateString.split(',').filter(Boolean)
+      const dates = dateString.split(',')
 
       dates.forEach((date: string) => {
         //Convert the string to Days, Hours and Minutes

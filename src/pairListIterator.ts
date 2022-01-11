@@ -30,11 +30,12 @@ export const generatePairList = (calendar: calendar) => {
     })
   }
 
+  printPercent(100)
   return pairList
 }
 
 export const createResultFile = async (pairList: pairList) => {
-  console.log(`Saving ${pairList.size} elements...`)
+  console.log(`\nSaving ${pairList.size} elements...`)
 
   let string = ''
   for (const [key, data] of pairList) string += `${key}: ${data.count} :${data.days}\n`

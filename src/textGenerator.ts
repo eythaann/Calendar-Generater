@@ -15,13 +15,14 @@ export const generateRandomTXT = async (amount: number, route: string) => {
     let ramdomName = ''
     let ramdomHour = ''
 
-    for (let j = 0; j < 8; j++) {
+    for (let j = 0; j < 8; ++j) {
       let r = Math.floor(Math.random() * LETTERS.length)
       ramdomName += LETTERS[r]
     }
 
-    //Generating ramdoms Hours
-    for (const day of DAYS) {
+    //Generating ramdoms Days and Hours
+    const days = [...DAYS]
+    for (let k = 0; k < 5; ++k) {
       let hourEnd = String(Math.floor(Math.random() * 23))
       let hourStart = String(Math.floor(Math.random() * Number(hourEnd)))
 
@@ -35,6 +36,7 @@ export const generateRandomTXT = async (amount: number, route: string) => {
       minuteStart = minuteStart.length === 1 ? '0' + minuteStart : minuteStart
       minuteEnd = minuteEnd.length === 1 ? '0' + minuteEnd : minuteEnd
 
+      const [day] = days.splice(Math.floor(Math.random() * days.length), 1)
       //return
       ramdomHour += `${day}${hourStart}:${minuteStart}-${hourEnd}:${minuteEnd},`
     }

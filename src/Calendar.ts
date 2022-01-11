@@ -1,5 +1,11 @@
 import { readFile } from 'fs/promises'
-import { calendar, day } from './interfaces/calendar.interface'
+import {
+  calendar,
+  day,
+  groupDay,
+  groupWeek,
+  individualWeek,
+} from './interfaces/calendar.interface'
 
 export class Calendar {
   #calendar: calendar
@@ -11,6 +17,16 @@ export class Calendar {
   static async buildFromTxt(route: string): Promise<Calendar> {
     console.log('Extracting Data...')
 
+    // txt to buffer and buffer to string
+    const data = await readFile(route)
+    const txt = data.toString()
+
+    // create a array of persons and filter all empyt lines
+    const persons = txt.split('\n').filter(Boolean)
+
+    console.log('Extract Data Completed \n')
+    console.log('Creating New Calendar')
+
     const calendar: calendar = {
       MO: new Array(1440) as string[][],
       TU: new Array(1440) as string[][],
@@ -20,70 +36,111 @@ export class Calendar {
       SA: new Array(1440) as string[][],
       SU: new Array(1440) as string[][],
     }
-
-    // txt to buffer and buffer to string
-    const data = await readFile(route)
-    const txt = data.toString()
-
-    // create a array of employes
-    // filter all empyt lines
-    let employes = txt.split('\n').filter(Boolean)
-
-    // Making a Calendar: {...Days} where each Day = employe[][] and the index
-    // is the minute of the day
-    employes.forEach((employe: string) => {
+    // Making a Calendar: {...Days} where each Day = employe[][]
+    // and the index is the minute of the day
+    persons.forEach((employe: string) => {
       const [name, dateString] = employe.split('=')
       const dates = dateString.split(',').filter(Boolean)
 
-      for (let date of dates) {
+      dates.forEach((date: string) => {
+        //Convert the string to Days, Hours and Minutes
         const day = date.slice(0, 2) as day
 
         const [startHour, endHour] = date.slice(2).split('-')
+        const [startMinutes, endMinutes] = this.hourToMinutes(startHour, endHour)
 
-        //Start Hour to minutes 0...
-        const [hour, minutes] = startHour.split(':')
-        const startMinutes = Number(hour) * 60 + Number(minutes)
-
-        //End Hour to minutes ...1440
-        const [hourEnd, minutesEnd] = endHour.split(':')
-        const endMinutes = Number(hourEnd) * 60 + Number(minutesEnd)
-
-        for (let i = startMinutes; i < endMinutes; ++i)
-          calendar[day][i] ? calendar[day][i].push(name) : (calendar[day][i] = [name])
-      }
+        //fill the calendar[day][minutes] with the name of the person
+        for (let minute = startMinutes; minute < endMinutes; ++minute)
+          calendar[day][minute]
+            ? calendar[day][minute].push(name)
+            : (calendar[day][minute] = [name])
+      })
     })
 
-    console.log('Extract Data Completed \n')
+    console.log('Calendar Created \n')
     return new Calendar(calendar)
   }
 
-  getDay(day: day) {
-    const result: { [x: number]: string[] } = {}
+  static hourToMinutes(...hours: string[]): number[] {
+    return hours.map((v: string) => {
+      const [hour, minutes] = v.split(':').map(v => Number(v))
+      if (hour > 23 || minutes > 59) throw 'invalid format'
+      return hour * 60 + minutes
+    })
+  }
 
-    for (let i = 0; i < this.#calendar[day].length; ) {
-      if (this.#calendar[day][i]) result[i] = this.#calendar[day][i]
-      else if (i != 0) result[i] = []
+  //return a single day of the times where change something
+  getDay(day: day): groupDay {
+    const result: groupDay = {}
+    let last: any = undefined
 
-      const next = this.#calendar[day].slice(i + 1).findIndex((v: any, j: number) => {
-        return this.#calendar[day][i] == undefined
-          ? v != undefined
-          : v?.join() != this.#calendar[day][i].join()
-      })
-
-      if (next === -1) break
-      i = next + i + 1
+    //here we use For and not forEach beacouse we need the undefineds
+    for (let minute = 0; minute < 1440; ++minute) {
+      let actual = this.#calendar[day][minute]
+      //just returned the hour of Enter and Exit
+      if (last?.toString() === actual?.toString()) continue
+      result[minute] = actual ?? []
+      last = actual
     }
+
     return result
   }
 
-  getWeek() {
-    const result: { [x: string]: { [x: number]: string[] } } = {}
+  //return all the getDays() in a object
+  getWeek(): groupWeek {
+    const result: groupWeek = {}
+    for (let day in this.#calendar) result[day as day] = this.getDay(day as day)
+    return result
+  }
 
-    for (let day in this.#calendar) {
-      result[day] = this.getDay(day as day)
+  get(persons: string | string[], day?: day): individualWeek {
+    let result: individualWeek = {}
+
+    if (day) {
+      this.#calendar[day].forEach((actual: string[], minute: number) => {
+        for (const person of [persons].flat()) if (!actual.includes(person)) return
+        result[day] ? result[day as day]?.push(minute) : (result[day as day] = [minute])
+      })
+      return result
+    }
+
+    for (const day in this.#calendar) {
+      result = { ...result, ...this.get(persons, day as day) }
     }
 
     return result
+  }
+
+  has(person: string, day?: day): boolean {
+    if (day) {
+      for (let minute = 0; minute < 1440; ++minute)
+        if (this.#calendar[day][minute]?.includes(person)) return true
+
+      return false
+    }
+
+    for (const day in this.#calendar) if (this.has(person, day as day)) return true
+
+    return false
+  }
+
+  append(name: string, startMinutes: number, endMinutes: number, day: day): void {
+    for (let minute = startMinutes; minute < endMinutes; ++minute)
+      this.#calendar[day][minute]
+        ? this.#calendar[day][minute].push(name)
+        : (this.#calendar[day][minute] = [name])
+  }
+
+  delete(person: string, day?: day): void {
+    if (day) {
+      this.#calendar[day].forEach((actual: string[]) => {
+        const index = actual?.indexOf(person)
+        if (index !== -1) actual.splice(index, 1)
+      })
+      return
+    }
+
+    for (const day in this.#calendar) this.delete(person, day as day)
   }
 
   get calendar(): calendar {

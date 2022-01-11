@@ -4,10 +4,13 @@ export type calendar = {
   [index in day]: string[][]
 }
 
-export type pairList = {
-  count: number
-  days: string
-}
+export type pairList = Map<
+  string,
+  {
+    count: number
+    days: string
+  }
+>
 
 export type individualWeek = {
   [index in day]?: number[]

@@ -78,7 +78,7 @@ export class Calendar {
     for (let minute = 0; minute < 1440; ++minute) {
       let actual = this.#calendar[day][minute]
       //just returned the hour of Enter and Exit
-      if (last?.toString() === actual?.toString()) continue
+      if (actual?.length === 0 || last?.toString() === actual?.toString()) continue
       result[minute] = actual ?? []
       last = actual
     }
@@ -133,7 +133,7 @@ export class Calendar {
 
   delete(person: string, day?: day): void {
     if (day) {
-      this.#calendar[day].forEach((actual: string[]) => {
+      this.#calendar[day].forEach((actual: any) => {
         const index = actual?.indexOf(person)
         if (index !== -1) actual.splice(index, 1)
       })

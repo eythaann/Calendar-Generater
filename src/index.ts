@@ -35,8 +35,9 @@ const start = async () => {
   for know what employes are working together you can use the calendar and their methods
   generate pairsList need many resources and time
   if you are runing files with many elements i don't recommend use pairList method.*/
-  //const pairListObject = generatePairList(calendar.calendar)
-  //await createResultFile(pairListObject)
+  const pairListObject = generatePairList(calendar.calendar)
+  console.log(pairListObject)
+  await createResultFile(pairListObject)
 
   console.log('\nPragram End.\n')
 }

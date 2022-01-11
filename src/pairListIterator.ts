@@ -2,44 +2,38 @@ import { writeFile } from 'fs/promises'
 import { calendar, day, pairList } from './interfaces/calendar.interface'
 
 export const generatePairList = (calendar: calendar) => {
-  const pairList: Map<string, pairList> = new Map()
+  const pairList: pairList = new Map()
 
   //this for is a constant of 7 days as MAX
   for (const day in calendar) {
-    const filtered = calendar[day as day]
-
-    //this for is a constant of 1440 minutes as MAX
     let last: string[] = []
-    for (let i = 0; i < filtered.length; ++i) {
-      const actual = filtered[i]
-
-      if (!actual || last.toString() === actual.toString()) continue
+    //this for is a constant of 1440 minutes as MAX
+    calendar[day as day].forEach((actual: string[], minute: number) => {
+      if (actual.length === 0 || last.toString() === actual.toString()) return
 
       //Create the userPairs O(n^2 / 2) //this part is scare D:
-      actual.forEach((v: string, j: number) =>
-        actual.slice(j + 1).forEach((w: string) => {
-          const key = `${v}-${w}`
-
+      actual.forEach((v: string, i: number) =>
+        actual.slice(i + 1).forEach((w: string) => {
           //Not count more than one time per day
-          let temp = pairList.get(key)
-          if (!temp?.days.includes(day)) {
+          const key = `${v}-${w}`
+          let pair = pairList.get(key)
+          if (!pair?.days.includes(day))
             pairList.set(key, {
-              count: (temp?.count ?? 0) + 1,
-              days: `${temp?.days ?? ' '}${day} `,
+              count: (pair?.count ?? 0) + 1,
+              days: `${pair?.days ?? ' '}${day} `,
             })
-          }
         })
       )
 
       last = actual
-      printPercent((i / filtered.length) * 100, day)
-    }
+      printPercent((minute / calendar[day as day].length) * 100, day)
+    })
   }
 
   return pairList
 }
 
-export const createResultFile = async (pairList: Map<string, pairList>) => {
+export const createResultFile = async (pairList: pairList) => {
   console.log(`Saving ${pairList.size} elements...`)
 
   let string = ''
